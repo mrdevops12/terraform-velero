@@ -1,0 +1,40 @@
+image:
+  repository: velero/velero
+  tag: v1.8.0
+  pullPolicy: IfNotPresent
+initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.0.0
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+configuration:
+  provider: aws
+  backupStorageLocation:
+    bucket: '${AWS_S3_BUCKET}'
+    config:
+      region: '${AWS_REGION}'
+  volumeSnapshotLocation:
+    config:
+      region: '${AWS_REGION}'
+
+
+serviceAccount:
+  server:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: '${EKS_ROLE_ARN}'
+
+
+
+schedules:
+  cluster-backup:
+    schedule: '${VELERO_SCHEDULE}'
+    template:
+      ttl: "240h"
+      storageLocation: default
+      snapshotVolumes: true
+      includedNamespaces:
+       - '*'
+      includedResources:
+       - '*'
